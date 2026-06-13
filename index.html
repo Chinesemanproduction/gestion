@@ -226,12 +226,6 @@
             word-break: break-all;
             margin-bottom: 15px;
         }
-
-        hr {
-            margin: 20px 0;
-            border: none;
-            border-top: 1px solid #ddd;
-        }
     </style>
 </head>
 <body>
@@ -303,7 +297,7 @@
 
     <script>
         // ============================================================
-        // CONFIGURACIÓN - ¡CAMBIAR ESTOS VALORES!
+        // CONFIGURACIÓN
         // ============================================================
         const SUPABASE_URL = 'https://lqgwqqbtzjxplcvdxuqs.supabase.co';
         const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxZ3dxcWJ0emp4cGxjdmR4dXFzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTM1NjU1NCwiZXhwIjoyMDk2OTMyNTU0fQ.C5_sNLeWyKaqBUxaJomYttwYa3n9ZWQlItxHhW9aThA';
@@ -314,7 +308,7 @@
         document.getElementById('jsonUrlDisplay').innerText = MENU_JSON_URL;
 
         let currentData = { products: [], extras: [] };
-        let editTarget = null; // { type: 'product', index: number } or { type: 'extra', index: number }
+        let editTarget = null;
 
         // ==================== 加载数据 ====================
         async function refreshData() {
@@ -330,7 +324,6 @@
             } catch (error) {
                 console.error('Error:', error);
                 updateStatus(`Error: ${error.message}`, false);
-                // 如果文件不存在，初始化空数据
                 if (currentData.products.length === 0) {
                     currentData = { products: [], extras: [] };
                     renderTables();
@@ -339,7 +332,6 @@
         }
 
         function renderTables() {
-            // 渲染商品表格
             const productTbody = document.querySelector('#products-table tbody');
             if (currentData.products.length === 0) {
                 productTbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#999;">No hay productos</td></tr>';
@@ -361,7 +353,6 @@
             }
             document.getElementById('productCount').innerHTML = `(${currentData.products.length})`;
 
-            // 渲染附加品表格
             const extraTbody = document.querySelector('#extras-table tbody');
             if (currentData.extras.length === 0) {
                 extraTbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999;">No hay extras</td></tr>';
@@ -383,7 +374,6 @@
             document.getElementById('extraCount').innerHTML = `(${currentData.extras.length})`;
         }
 
-        // ==================== 商品 CRUD ====================
         window.openProductModal = (index) => {
             editTarget = index !== undefined ? { type: 'product', index: index } : null;
             const p = (index !== undefined && currentData.products[index]) 
@@ -426,14 +416,13 @@
         window.editProduct = (idx) => openProductModal(idx);
 
         window.deleteProduct = (idx) => {
-            if (confirm(`¿Eliminar "${currentData.products[idx].name_es}"? Esta acción no se puede deshacer.`)) {
+            if (confirm(`¿Eliminar "${currentData.products[idx].name_es}"?`)) {
                 currentData.products.splice(idx, 1);
                 renderTables();
                 updateStatus('Producto eliminado. Recuerda guardar los cambios.', false);
             }
         };
 
-        // ==================== 附加品 CRUD ====================
         window.openExtraModal = (index) => {
             editTarget = index !== undefined ? { type: 'extra', index: index } : null;
             const e = (index !== undefined && currentData.extras[index]) 
@@ -469,14 +458,13 @@
         window.editExtra = (idx) => openExtraModal(idx);
 
         window.deleteExtra = (idx) => {
-            if (confirm(`¿Eliminar "${currentData.extras[idx].name_es}"? Esta acción no se puede deshacer.`)) {
+            if (confirm(`¿Eliminar "${currentData.extras[idx].name_es}"?`)) {
                 currentData.extras.splice(idx, 1);
                 renderTables();
                 updateStatus('Extra eliminado. Recuerda guardar los cambios.', false);
             }
         };
 
-        // ==================== 保存表单 ====================
         window.saveForm = () => {
             const modalTitle = document.getElementById('modalTitle').innerText;
             const isProduct = modalTitle.includes('producto');
@@ -503,7 +491,6 @@
                 if (editTarget && editTarget.index !== undefined) {
                     currentData.products[editTarget.index] = newProduct;
                 } else {
-                    // 检查编码是否重复
                     if (currentData.products.some(p => p.code === newProduct.code)) {
                         alert(`El código ${newProduct.code} ya existe`);
                         return;
@@ -549,14 +536,14 @@
             editTarget = null;
         };
 
-        // ==================== 保存到 Supabase Storage ====================
+        // ==================== 保存到 Supabase Storage (修复版) ====================
         window.saveToSupabase = async () => {
             const jsonString = JSON.stringify(currentData, null, 2);
-            const blob = new Blob([jsonString], { type: 'application/json' });
             
             updateStatus('Guardando en la nube...', false);
             
             try {
+                // 使用正确的 Supabase Storage API 格式
                 const response = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET_NAME}/${FILE_PATH}`, {
                     method: 'PUT',
                     headers: {
@@ -579,7 +566,6 @@
             }
         };
 
-        // ==================== 辅助函数 ====================
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/[&<>]/g, function(m) {
@@ -605,7 +591,6 @@
             }, 3000);
         }
 
-        // 初始化
         refreshData();
     </script>
 </body>
